@@ -1,0 +1,1 @@
+console.log((e=>{if(0===e.length)return"";for(let r of(e=>{let r=[e];for(let t=e.length-1;t>0;t--)for(let l=0;l<e.length-t+1;l++)r.push(e.substring(l,l+t));return r})(e.sort(((e,r)=>r.length-e.length))[0]))if(e.every((e=>e.includes(r))))return r;return""})(process.argv.slice(2)))
