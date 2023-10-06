@@ -50,17 +50,16 @@ class NonTransitiveGame:
                     case move if move.strip() in strat_names:
                         player_strat = self._strategies.get_by_name(move.strip())
                         self._play(player_strat, computer_strat)
-                        print(messages.hmac_key.format(secret))
                         break
                     case move if try_str_to_int(move) in strat_ids and is_int(move):
                         player_strat = self._strategies.get_by_id(int(move.strip()))
                         self._play(player_strat, computer_strat)
-                        print(messages.hmac_key.format(secret))
                         break
                     case _:
                         print(self._menu)
                         print("Please choose one of the commands")
 
+            print(messages.hmac_key.format(secret))
             input("Press 'Enter' to continue...")
             print()
 
