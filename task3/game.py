@@ -1,6 +1,6 @@
 from random_number_generator import Generator as RandomGenerator
 from hmac_generator import Generator as HMACGenerator
-from strategies import InvalidStrategyNumberException, RepeatingStrategyException, Strategies
+from strategies import InvalidStrategyNumberException, RepeatingStrategyException, Strategies, Strategy
 from table import Table
 from rules import GameResult, Rules, UndeclaredStrategyException
 from typing import List
@@ -34,7 +34,11 @@ class NonTransitiveGame:
             strat_names = [strat.get_name() for strat in self._strategies.to_list()]
 
             secret = self._hmac_generator.generate_secret()
-            print(messages.hmac_key.format(secret))
+            computer_strat_id = self._random_generator.generate_int_in_range(1, len(self._strategies.to_list()))
+            computer_strat = self._strategies.get_by_id(computer_strat_id)
+            computer_hmac = self._hmac_generator.generate_sha256(computer_strat.get_name(), secret)
+
+            print(messages.hmac.format(computer_hmac))
             print(self._menu)
             while True:
                 move = input(messages.read_move)
@@ -44,10 +48,14 @@ class NonTransitiveGame:
                     case move if move.strip() in ["help", "?"]:
                         print(self._table.to_string())
                     case move if move.strip() in strat_names:
-                        self._play(secret, move.strip())
+                        player_strat = self._strategies.get_by_name(move.strip())
+                        self._play(player_strat, computer_strat)
+                        print(messages.hmac_key.format(secret))
                         break
                     case move if try_str_to_int(move) in strat_ids and is_int(move):
-                        self._play(secret, self._strategies.get_by_id(int(move.strip())).get_name())
+                        player_strat = self._strategies.get_by_id(int(move.strip()))
+                        self._play(player_strat, computer_strat)
+                        print(messages.hmac_key.format(secret))
                         break
                     case _:
                         print(self._menu)
@@ -57,15 +65,10 @@ class NonTransitiveGame:
             print()
 
 
-    def _play(self, secret: str, your_strat_name: str) -> None:
-        your_strat = self._strategies.get_by_name(your_strat_name)
-
-        computerMoveID = self._random_generator.generate_int_in_range(1, len(self._strategies.to_list()))
-        computerStrat = self._strategies.get_by_id(computerMoveID)
-        result_hmac = self._hmac_generator.generate_sha256(computerStrat.get_name(), secret)
-        print(messages.your_move.format(your_strat.get_name()))
-        print(messages.computer_move.format(computerStrat.get_name()))
-        result = self._rules.get_result(your_strat, computerStrat)
+    def _play(self, player_strat: Strategy, computer_strat: Strategy) -> None:
+        print(messages.your_move.format(player_strat.get_name()))
+        print(messages.computer_move.format(computer_strat.get_name()))
+        result = self._rules.get_result(player_strat, computer_strat)
         match result:
             case GameResult.Win: 
                 print(messages.on_win)
@@ -73,7 +76,6 @@ class NonTransitiveGame:
                 print(messages.on_lose)
             case GameResult.Draw:
                 print(messages.on_draw)
-        print(messages.hmac.format(result_hmac))
 
 
 def try_init_game(args) -> NonTransitiveGame | None:
